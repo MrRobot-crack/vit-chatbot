@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIT Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom, #d6e9ff, #f0f6fb);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #003366;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background-color: #e9f2fa;
+      padding-bottom: 1rem;
+    }
+    .msg-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      max-width: 80%;
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg-wrap.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #ccc;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid white;
+    }
+    .msg {
+      padding: 0.85rem 1.25rem;
+      border-radius: 16px;
+      font-size: 1rem;
+      line-height: 1.5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .user.msg {
+      background: #cbe4ff;
+    }
+    .bot.msg {
+      background: #ffffff;
+      border: 1px solid #cfdde8;
+    }
+    .typing {
+      font-style: italic;
+      opacity: 0.7;
+      background: #e1f0ff;
+      border: 1px dashed #88b2dd;
+    }
+    form {
+      width: calc(100% - 40px);
+      max-width: 800px;
+      margin: 1rem auto;
+      display: flex;
+      background: #ffffff;
+      padding: 0.6rem 0.6rem;
+      border-radius: 100px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      border: 1px solid #aad3ff;
+      transition: box-shadow 0.3s ease;
+    }
+    form:hover {
+      box-shadow: 0 14px 36px rgba(0, 87, 163, 0.25);
+    }
+    input[type="text"] {
+      flex: 1;
+      font-size: 1rem;
+      padding: 1rem 1.25rem;
+      border: none;
+      border-radius: 50px;
+      outline: none;
+      background-color: #ffffff;
+    }
+    button {
+      margin-left: 0.5rem;
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 30px;
+      background: #0057a3;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    button:hover {
+      background: #004080;
+      box-shadow: 0 0 10px rgba(0, 87, 163, 0.5);
+      transform: scale(1.03);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <header>VIT Chatbot</header>
+  <main>
+    <div class="messages" id="messages"></div>
+    <form id="input-area">
+      <input id="user-input" type="text" placeholder="Ask me anything about VIT Bhopal..." autocomplete="off" />
+      <button id="send-btn" type="submit">Send</button>
+    </form>
+  </main>
+  <script>
+    const messagesDiv = document.getElementById('messages');
+    const form = document.getElementById('input-area');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    let chatHistory = [];
+
+    function addMessage(content, sender, raw = false) {
+      const wrap = document.createElement('div');
+      wrap.className = `msg-wrap ${sender}`;
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.style.backgroundImage = sender === 'bot'
+        ? "url('https://cdn-icons-png.flaticon.com/512/4712/4712109.png')"
+        : "url('https://cdn-icons-png.flaticon.com/512/1144/1144760.png')";
+      const bubble = document.createElement('div');
+      bubble.className = sender + ' msg';
+      bubble.innerHTML = raw ? content : content.replace(/\n/g, '<br>');
+      if (sender === 'user') {
+        wrap.appendChild(bubble);
+        wrap.appendChild(avatar);
+      } else {
+        wrap.appendChild(avatar);
+        wrap.appendChild(bubble);
+      }
+      messagesDiv.appendChild(wrap);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showTyping() {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap bot';
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/4712/4712109.png')";
+      const bubble = document.createElement('div');
+      bubble.className = 'bot msg typing';
+      bubble.textContent = 'Typing...';
+      wrap.appendChild(avatar);
+      wrap.appendChild(bubble);
+      messagesDiv.appendChild(wrap);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return () => messagesDiv.removeChild(wrap);
+    }
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const input = userInput.value.trim();
+      if (!input) return;
+      addMessage(input, 'user');
+      userInput.value = '';
+      sendBtn.disabled = true;
+      userInput.focus();
+      chatHistory.push({ role: 'user', content: input });
+      const stopTyping = showTyping();
+
+      try {
+        const response = await fetch(`${window.location.origin}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: chatHistory })
+        });
+
+        const data = await response.json();
+
+        if (data.reply) {
+          chatHistory.push({ role: 'assistant', content: data.reply });
+          addMessage(data.reply, 'bot');
+        } else {
+          addMessage('Sorry, no response from server.', 'bot');
+        }
+      } catch (error) {
+        console.error("Error contacting backend:", error);
+        addMessage("Error: Couldn't reach the server.", 'bot');
+      } finally {
+        stopTyping();
+        sendBtn.disabled = false;
+      }
+    };
+
+    userInput.focus();
+  </script>
+</body>
+</html>
